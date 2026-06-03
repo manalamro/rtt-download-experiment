@@ -1,0 +1,4 @@
+Region,N,RTT_mean_ms,RTT_std_ms,Download_mean_s,Download_median_s,Download_std_s,Throughput_mean_Mbps,Throughput_std_Mbps
+France,28,99.529,11.422,3.701,3.519,0.505,21.98,2.797
+Canada,25,318.894,96.231,7.196,7.069,0.879,11.282,1.416
+Singapore,29,424.651,82.336,12.746,11.742,3.646,6.778,1.912
