@@ -31,6 +31,8 @@ from scipy import stats
 # ---------------------------------------------------------------------------
 
 SAVE_DPI = 300
+# ~1.4× scale: readable at full \textwidth / \columnwidth in two-column papers
+FIG_SCALE = 1.4
 
 sns.set_style("whitegrid")
 plt.rcParams.update(
@@ -38,15 +40,15 @@ plt.rcParams.update(
         "figure.dpi": SAVE_DPI,
         "savefig.dpi": SAVE_DPI,
         "font.family": "serif",
-        "font.size": 11,
-        "axes.labelsize": 11,
+        "font.size": 14,
+        "axes.labelsize": 14,
         "axes.labelweight": "bold",
-        "axes.titlesize": 12,
+        "axes.titlesize": 15,
         "axes.titleweight": "bold",
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
-        "legend.fontsize": 9,
-        "legend.title_fontsize": 9,
+        "xtick.labelsize": 13,
+        "ytick.labelsize": 13,
+        "legend.fontsize": 12,
+        "legend.title_fontsize": 12,
         "text.color": "black",
         "axes.labelcolor": "black",
         "axes.titlecolor": "black",
@@ -107,7 +109,7 @@ def style_axes(ax: plt.Axes) -> None:
     ax.tick_params(
         axis="both",
         which="major",
-        labelsize=10,
+        labelsize=13,
         width=1.5,
         length=5,
         color="black",
@@ -130,6 +132,30 @@ def style_legend(leg: plt.Legend) -> None:
     frame.set_facecolor("white")
     for text in leg.get_texts():
         text.set_color("black")
+
+
+def legend_above(
+    ax: plt.Axes,
+    ncol: int = 3,
+    top: float = 0.82,
+    bottom: float | None = None,
+    **kwargs,
+) -> plt.Legend:
+    """Center legend above the plot — stays inside \\columnwidth when scaled up."""
+    leg = ax.legend(
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.0),
+        ncol=ncol,
+        borderaxespad=0.4,
+        frameon=True,
+        **kwargs,
+    )
+    style_legend(leg)
+    adjust = {"top": top}
+    if bottom is not None:
+        adjust["bottom"] = bottom
+    ax.figure.subplots_adjust(**adjust)
+    return leg
 
 
 def remove_outliers_iqr(series: pd.Series) -> pd.Series:
@@ -192,7 +218,7 @@ def save_summary_table(df_clean: pd.DataFrame, outdir: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def fig1_workflow(outdir: Path) -> None:
-    fig, ax = plt.subplots(figsize=(9, 2.4))
+    fig, ax = plt.subplots(figsize=(9 * FIG_SCALE, 2.4 * FIG_SCALE))
     ax.set_xlim(0, 12)
     ax.set_ylim(0, 3)
     ax.axis("off")
@@ -215,7 +241,7 @@ def fig1_workflow(outdir: Path) -> None:
         )
         ax.add_patch(rect)
         ax.text(x + BOX_W / 2, y + 0.5, text,
-                ha="center", va="center", fontsize=10, fontweight="bold",
+                ha="center", va="center", fontsize=13, fontweight="bold",
                 color="black")
 
     # arrows: from right edge of box N to left edge of box N+1
@@ -232,7 +258,7 @@ def fig1_workflow(outdir: Path) -> None:
 
     ax.text(6.0, 2.65,
             "OVH proof servers: France | Canada | Singapore",
-            ha="center", fontsize=10, style="italic", color="black")
+            ha="center", fontsize=13, style="italic", color="black")
     save_figure(fig, outdir, "fig1_workflow")
 
 
@@ -241,7 +267,7 @@ def fig1_workflow(outdir: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def fig2_regression(df_clean: pd.DataFrame, outdir: Path) -> None:
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    fig, ax = plt.subplots(figsize=(7 * FIG_SCALE, 4.5 * FIG_SCALE))
 
     for region in REGION_ORDER:
         g = df_clean[df_clean["Region"] == region]
@@ -255,7 +281,7 @@ def fig2_regression(df_clean: pd.DataFrame, outdir: Path) -> None:
             alpha=0.85,
             edgecolors="black",
             linewidths=0.6,
-            s=50,
+            s=75,
             zorder=3,
         )
 
@@ -270,9 +296,7 @@ def fig2_regression(df_clean: pd.DataFrame, outdir: Path) -> None:
     ax.set_axisbelow(True)
     ax.grid(True, linestyle="--", alpha=0.35, color="#666666", linewidth=0.8)
     style_axes(ax)
-    leg = ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1),
-                    borderaxespad=0, frameon=True)
-    style_legend(leg)
+    legend_above(ax, ncol=2, top=0.72)
 
     save_figure(fig, outdir, "fig2_regression")
 
@@ -291,7 +315,7 @@ def fig3_violin(df_clean: pd.DataFrame, outdir: Path) -> None:
       - IQR box + median diamond give the familiar summary statistics.
       - Outliers are obvious without needing a separate flier marker.
     """
-    fig, ax = plt.subplots(figsize=(6.5, 5.2))
+    fig, ax = plt.subplots(figsize=(6.5 * FIG_SCALE, 5.2 * FIG_SCALE))
 
     np.random.seed(42)  # reproducible jitter
 
@@ -339,7 +363,7 @@ def fig3_violin(df_clean: pd.DataFrame, outdir: Path) -> None:
         ax.add_patch(box)
         # median diamond
         ax.scatter([pos], [med],
-                   marker="D", s=28,
+                   marker="D", s=42,
                    color=REGION_COLORS[region],
                    zorder=5, linewidths=0)
 
@@ -352,7 +376,7 @@ def fig3_violin(df_clean: pd.DataFrame, outdir: Path) -> None:
             color=REGION_COLORS[region],
             marker=REGION_MARKERS[region],
             alpha=0.65,
-            s=18,
+            s=28,
             edgecolors="black",
             linewidths=0.4,
             zorder=6,
@@ -376,14 +400,13 @@ def fig3_violin(df_clean: pd.DataFrame, outdir: Path) -> None:
             xytext=(0, -52),
             textcoords="offset points",
             ha="center", va="top",
-            fontsize=9, fontweight="bold", color="black",
+            fontsize=12, fontweight="bold", color="black",
             annotation_clip=False,
             bbox=dict(boxstyle="round,pad=0.25",
                       facecolor="white", edgecolor="black", linewidth=1.2),
         )
 
     ax.set_xlabel("Geographical region", labelpad=42)
-    fig.subplots_adjust(bottom=0.28)
 
     # --- legend for jitter markers ---
     legend_handles = [
@@ -395,9 +418,7 @@ def fig3_violin(df_clean: pd.DataFrame, outdir: Path) -> None:
         )
         for r in REGION_ORDER
     ]
-    leg = ax.legend(handles=legend_handles, loc="upper left",
-                    bbox_to_anchor=(1.02, 1), borderaxespad=0, frameon=True)
-    style_legend(leg)
+    legend_above(ax, handles=legend_handles, ncol=3, top=0.86, bottom=0.28)
 
     save_figure(fig, outdir, "fig3_violin")
 
@@ -407,7 +428,7 @@ def fig3_violin(df_clean: pd.DataFrame, outdir: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def fig4_cdf(df_clean: pd.DataFrame, outdir: Path) -> None:
-    fig, ax = plt.subplots(figsize=(6.5, 4))
+    fig, ax = plt.subplots(figsize=(6.5 * FIG_SCALE, 4 * FIG_SCALE))
 
     for region in REGION_ORDER:
         sorted_dl = np.sort(
@@ -423,7 +444,7 @@ def fig4_cdf(df_clean: pd.DataFrame, outdir: Path) -> None:
         ax.scatter(sorted_dl[::5], cdf[::5],
                    color=REGION_COLORS[region],
                    marker=REGION_MARKERS[region],
-                   s=45, edgecolors="black",
+                   s=65, edgecolors="black",
                    linewidths=0.8, zorder=5)
 
     ax.set_xscale("log")
@@ -437,9 +458,7 @@ def fig4_cdf(df_clean: pd.DataFrame, outdir: Path) -> None:
     ax.grid(True, which="major", linestyle="--", alpha=0.35, color="#666666", linewidth=0.8)
     ax.grid(True, which="minor", linestyle=":",  alpha=0.20, color="#888888", linewidth=0.6)
     style_axes(ax)
-    leg = ax.legend(title="Region", bbox_to_anchor=(1.02, 1),
-                    loc="upper left", frameon=True)
-    style_legend(leg)
+    leg = legend_above(ax, title="Region", ncol=3, top=0.84)
     leg.get_title().set_color("black")
 
     save_figure(fig, outdir, "fig4_cdf")
