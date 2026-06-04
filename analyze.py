@@ -218,47 +218,51 @@ def save_summary_table(df_clean: pd.DataFrame, outdir: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def fig1_workflow(outdir: Path) -> None:
-    fig, ax = plt.subplots(figsize=(9 * FIG_SCALE, 2.4 * FIG_SCALE))
-    ax.set_xlim(0, 12)
-    ax.set_ylim(0, 3)
-    ax.axis("off")
+    fig, ax = plt.subplots(figsize=(9 * FIG_SCALE * 1.08, 2.4 * FIG_SCALE * 1.35))
 
-    # box width=2.2, gap=0.4 → starts: 0.2, 2.8, 5.4, 8.0
-    boxes = [
-        (0.2,  1.0, "Client\n(Windows + curl)"),
-        (2.8,  1.0, "TCP connect\n(RTT measure)"),
-        (5.4,  1.0, "HTTPS GET\n10 MB file"),
-        (8.0,  1.0, "Log CSV\n30 samples\n× 3 regions"),
+    CANVAS_W, CANVAS_H = 12.0, 3.4
+    BOX_W, BOX_H, GAP = 2.5, 1.15, 0.45
+    ax.set_xlim(0, CANVAS_W)
+    ax.set_ylim(0, CANVAS_H)
+    ax.axis("off")
+    ax.set_aspect("auto")
+
+    labels = [
+        "Client\n(Windows + curl)",
+        "TCP connect\n(RTT measure)",
+        "HTTPS GET\n10 MB file",
+        "Log CSV\n30 samples\n× 3 regions",
     ]
-    BOX_W = 2.2
-    for x, y, text in boxes:
+    flow_w = len(labels) * BOX_W + (len(labels) - 1) * GAP
+    x0 = (CANVAS_W - flow_w) / 2
+    y0 = (CANVAS_H - BOX_H) / 2 - 0.05
+    cy = y0 + BOX_H / 2
+
+    xs = [x0 + i * (BOX_W + GAP) for i in range(len(labels))]
+
+    for x, text in zip(xs, labels):
         rect = mpatches.FancyBboxPatch(
-            (x, y), BOX_W, 1.0,
+            (x, y0), BOX_W, BOX_H,
             boxstyle="round,pad=0.05",
             linewidth=1.5,
             edgecolor="black",
             facecolor="#f0f0f0",
         )
         ax.add_patch(rect)
-        ax.text(x + BOX_W / 2, y + 0.5, text,
-                ha="center", va="center", fontsize=13, fontweight="bold",
+        ax.text(x + BOX_W / 2, cy, text,
+                ha="center", va="center", fontsize=14, fontweight="bold",
                 color="black")
 
-    # arrows: from right edge of box N to left edge of box N+1
-    arrow_xs = [
-        (0.2  + BOX_W, 2.8),   # box1 → box2
-        (2.8  + BOX_W, 5.4),   # box2 → box3
-        (5.4  + BOX_W, 8.0),   # box3 → box4
-    ]
-    for x_start, x_end in arrow_xs:
+    for i in range(len(xs) - 1):
         ax.annotate("",
-            xy=(x_end, 1.5), xytext=(x_start, 1.5),
-            arrowprops=dict(arrowstyle="->", lw=2.0, color="black"),
+            xy=(xs[i + 1], cy), xytext=(xs[i] + BOX_W, cy),
+            arrowprops=dict(arrowstyle="->", lw=2.2, color="black"),
         )
 
-    ax.text(6.0, 2.65,
+    ax.text(CANVAS_W / 2, y0 + BOX_H + 0.55,
             "OVH proof servers: France | Canada | Singapore",
-            ha="center", fontsize=13, style="italic", color="black")
+            ha="center", va="bottom", fontsize=14, style="italic", color="black")
+    fig.subplots_adjust(left=0.02, right=0.98, top=0.92, bottom=0.08)
     save_figure(fig, outdir, "fig1_workflow")
 
 
